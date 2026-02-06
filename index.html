@@ -325,7 +325,7 @@
         }
 
         .budget-package li:before {
-            content: "‚úì";
+            content: "✓";
             position: absolute;
             left: 0;
             color: var(--platinum-gold);
@@ -359,7 +359,7 @@
         <div class="input-area" id="inputArea"></div>
     </div>
 
-    <div class="autosave-indicator" id="autosaveIndicator">Saved ‚úì</div>
+    <div class="autosave-indicator" id="autosaveIndicator">Saved ✓</div>
 
     <script>
         // Initialize Supabase
@@ -748,7 +748,7 @@
                 showAutoSaveIndicator();
             } catch (error) {
                 console.error('Error saving to Supabase:', error);
-                addMessage('‚ö†Ô∏è There was an error saving your data. Please try again.', true);
+                addMessage('⚠️ There was an error saving your data. Please try again.', true);
             }
         }
 
@@ -806,7 +806,7 @@
                 // File upload area
                 const uploadArea = document.createElement('div');
                 uploadArea.className = 'file-upload-area';
-                uploadArea.innerHTML = '<p>üìé Drag & drop files here or click to browse</p><p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">Max 50MB per file</p>';
+                uploadArea.innerHTML = '<p>📎 Drag & drop files here or click to browse</p><p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">Max 50MB per file</p>';
 
                 const fileInput = document.createElement('input');
                 fileInput.type = 'file';
@@ -974,7 +974,7 @@
                 fileItem.className = 'file-item';
                 fileItem.innerHTML = `
                     <span>${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
-                    <span class="file-remove" onclick="removeFile('${question.id}', '${file.name}')">‚úï</span>
+                    <span class="file-remove" onclick="removeFile('${question.id}', '${file.name}')">✕</span>
                 `;
                 fileList.appendChild(fileItem);
 
@@ -1008,10 +1008,10 @@
             };
 
             if (uploadedFiles[question.id] && uploadedFiles[question.id].length > 0) {
-                addMessage(`‚úì Uploaded ${uploadedFiles[question.id].length} file(s)`, false);
+                addMessage(`✓ Uploaded ${uploadedFiles[question.id].length} file(s)`, false);
             }
             if (links) {
-                addMessage(`üìé Links: ${links}`, false);
+                addMessage(`📎 Links: ${links}`, false);
             }
             if (!uploadedFiles[question.id]?.length && !links) {
                 addMessage('Skipped', false);
@@ -1029,7 +1029,7 @@
             if (budget < 10000) {
                 packageHTML = `
                     <div class="budget-package">
-                        <h3>üì¶ Basic Campaign Package (Budget: $${budget.toLocaleString()})</h3>
+                        <h3>📦 Basic Campaign Package (Budget: $${budget.toLocaleString()})</h3>
                         <ul>
                             <li>Facebook & Instagram ad campaigns</li>
                             <li>Basic audience targeting</li>
@@ -1042,7 +1042,7 @@
             } else if (budget >= 10000 && budget < 50000) {
                 packageHTML = `
                     <div class="budget-package">
-                        <h3>üöÄ Standard Campaign Package (Budget: $${budget.toLocaleString()})</h3>
+                        <h3>🚀 Standard Campaign Package (Budget: $${budget.toLocaleString()})</h3>
                         <ul>
                             <li>Multi-platform campaigns (Facebook, Instagram, Google, TikTok)</li>
                             <li>Advanced audience targeting & retargeting</li>
@@ -1057,7 +1057,7 @@
             } else {
                 packageHTML = `
                     <div class="budget-package">
-                        <h3>üíé Premium Campaign Package (Budget: $${budget.toLocaleString()})</h3>
+                        <h3>💎 Premium Campaign Package (Budget: $${budget.toLocaleString()})</h3>
                         <ul>
                             <li>Full-funnel multi-platform strategy</li>
                             <li>AI-powered Lookalike Audiences</li>
@@ -1079,7 +1079,7 @@
         async function showSummary() {
             await saveToSupabase(); // Final save
 
-            addMessage('üéâ Thank you! Your event brief is complete.', true);
+            addMessage('🎉 Thank you! Your event brief is complete.', true);
 
             let summaryHTML = '<div style="margin-top: 20px;"><strong>Summary:</strong><br><br>';
 
@@ -1095,11 +1095,11 @@
             }
 
             summaryHTML += `<strong>${answers.eventName}</strong><br>`;
-            summaryHTML += `üìß ${answers.email}<br>`;
-            summaryHTML += `üìÖ ${answers.eventDate}<br>`;
-            summaryHTML += `üìç ${answers.city}, ${answers.country}<br>`;
-            summaryHTML += `üí∞ Marketing Budget: $${budget.toLocaleString()}<br>`;
-            summaryHTML += `üé´ Expected Revenue: $${revenue.toLocaleString()}<br><br>`;
+            summaryHTML += `📧 ${answers.email}<br>`;
+            summaryHTML += `📅 ${answers.eventDate}<br>`;
+            summaryHTML += `📍 ${answers.city}, ${answers.country}<br>`;
+            summaryHTML += `💰 Marketing Budget: $${budget.toLocaleString()}<br>`;
+            summaryHTML += `🎫 Expected Revenue: $${revenue.toLocaleString()}<br><br>`;
             summaryHTML += `We'll send you a detailed proposal within 24 hours at ${answers.email}.`;
             summaryHTML += '</div>';
 
@@ -1110,11 +1110,19 @@
             `;
         }
 
-                        // Initialize - script is at end of body so DOM is ready
-                updateProgress();
-                addMessage('Welcome to Platinumlist Event Marketing! Let\'s create your event brief together. 🎉', true);
-                setTimeout(showInput, 1000);
+        // Initialize - wait for Supabase to load
+        function init() {
+            updateProgress();
+            addMessage('Welcome to Platinumlist Event Marketing! Let\'s create your event brief together. 🎉', true);
+            setTimeout(showInput, 1000);
+        }
+
+        // Check if Supabase is loaded, if not wait
+        if (typeof window.supabase !== 'undefined') {
+            init();
+        } else {
+            window.addEventListener('load', init);
+        }
     </script>
 </body>
 </html>
-          
