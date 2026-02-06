@@ -1110,12 +1110,10 @@
             `;
         }
 
-                // Initialize when page and Supabase are loaded
-                window.addEventListener('load', function() {
-                                updateProgress();
-                                addMessage('Welcome to Platinumlist Event Marketing! Let\'s create your event brief together. 🎉', true);
-                                setTimeout(showInput, 1000);
-                });
+                        // Initialize - script is at end of body so DOM is ready
+                updateProgress();
+                addMessage('Welcome to Platinumlist Event Marketing! Let\'s create your event brief together. 🎉', true);
+                setTimeout(showInput, 1000);
     </script>
 </body>
 </html>
