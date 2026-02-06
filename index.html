@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Brief Assistant | Platinumlist</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --platinum-monday: #1a1a1a;
+            --platinum-suede: #00d9ff;
+            --platinum-gold: #ffd700;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --border-color: rgba(0, 217, 255, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--platinum-monday);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: rgba(26, 26, 26, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 217, 255, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--platinum-suede);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin: 30px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--platinum-suede), var(--platinum-gold));
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .chat-container {
+            min-height: 300px;
+            max-height: 500px;
+            overflow-y: auto;
+            margin-bottom: 30px;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .bot-message {
+            background: rgba(0, 217, 255, 0.1);
+            padding: 15px 20px;
+            border-radius: 15px 15px 15px 5px;
+            border-left: 3px solid var(--platinum-suede);
+        }
+
+        .user-message {
+            background: rgba(255, 215, 0, 0.1);
+            padding: 15px 20px;
+            border-radius: 15px 15px 5px 15px;
+            border-right: 3px solid var(--platinum-gold);
+            text-align: right;
+        }
+
+        .input-area {
+            margin-top: 20px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        input[type="date"],
+        textarea {
+            width: 100%;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--platinum-suede);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .choice-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .choice-btn {
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            font-size: 16px;
+        }
+
+        .choice-btn:hover {
+            background: rgba(0, 217, 255, 0.1);
+            border-color: var(--platinum-suede);
+            transform: translateX(5px);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--platinum-suede), var(--platinum-gold));
+            border: none;
+            border-radius: 10px;
+            color: var(--platinum-monday);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 15px;
+        }
+
+        .submit-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .hint {
+            margin-top: 10px;
+            padding: 10px 15px;
+            background: rgba(255, 215, 0, 0.05);
+            border-left: 3px solid var(--platinum-gold);
+            border-radius: 5px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .hint-toggle {
+            display: inline-block;
+            margin-left: 10px;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 215, 0, 0.2);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            color: var(--platinum-gold);
+            transition: all 0.3s;
+        }
+
+        .hint-toggle:hover {
+            background: rgba(255, 215, 0, 0.3);
+            transform: scale(1.1);
+        }
+
+        .hint-content {
+            margin-top: 10px;
+            display: none;
+        }
+
+        .hint-content.show {
+            display: block;
+        }
+
+        .file-upload-area {
+            margin-top: 15px;
+            padding: 20px;
+            border: 2px dashed var(--border-color);
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--platinum-suede);
+            background: rgba(0, 217, 255, 0.05);
+        }
+
+        .file-upload-area.dragover {
+            border-color: var(--platinum-gold);
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .file-list {
+            margin-top: 15px;
+        }
+
+        .file-item {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-remove {
+            color: #ff4444;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+
+        .autosave-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background: rgba(0, 217, 255, 0.9);
+            color: var(--platinum-monday);
+            border-radius: 5px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .autosave-indicator.show {
+            opacity: 1;
+        }
+
+        .budget-package {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(0, 217, 255, 0.05);
+            border: 1px solid var(--platinum-suede);
+            border-radius: 10px;
+        }
+
+        .budget-package h3 {
+            color: var(--platinum-suede);
+            margin-bottom: 15px;
+        }
+
+        .budget-package ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .budget-package li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .budget-package li:before {
+            content: "‚úì";
+            position: absolute;
+            left: 0;
+            color: var(--platinum-gold);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .choice-btn:hover {
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">PLATINUMLIST</div>
+            <div class="subtitle">Event Marketing Brief Assistant</div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">0 / 0</div>
+
+        <div class="chat-container" id="chatContainer"></div>
+
+        <div class="input-area" id="inputArea"></div>
+    </div>
+
+    <div class="autosave-indicator" id="autosaveIndicator">Saved ‚úì</div>
+
+    <script>
+        // Initialize Supabase
+        const SUPABASE_URL = 'https://vvtqmvpqbwwlxzkgyyim.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2dHFtdnBxYnd3bHh6a2d5eWltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMzMxMTQsImV4cCI6MjA4MDcwOTExNH0.MOWt69qK5RB5LBeCbL1r4GuBGHZBn5uRWBuPSXuBJ_w';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentBriefId = null; // Store the current brief ID for updates
+
+        const questions = [
+            {
+                id: 'userName',
+                type: 'text',
+                question: 'Hi! I\'m your Event Marketing Assistant. What\'s your name?',
+                hint: 'We\'ll use your name to personalize this conversation and make it more comfortable.',
+                placeholder: 'e.g., Alex',
+                required: true
+            },
+            {
+                id: 'email',
+                type: 'email',
+                question: (answers) => `Great to meet you, ${answers.userName || 'there'}! What\'s your email address?`,
+                hint: 'We\'ll use this to send you the final brief and stay in touch about your campaign.',
+                placeholder: 'your@email.com',
+                required: true
+            },
+            {
+                id: 'eventName',
+                type: 'text',
+                question: (answers) => `Perfect! Now, what\'s the name of your event, ${answers.userName}?`,
+                hint: 'This helps us understand your brand and create targeted messaging.',
+                placeholder: 'e.g., Dubai Summer Music Festival 2026',
+                required: true
+            },
+            {
+                id: 'eventType',
+                type: 'choice',
+                question: (answers) => `Perfect! For ${answers.eventName}, what type of event is this?`,
+                hint: 'Understanding your event category helps us target the right audience with appropriate messaging and channels.',
+                choices: [
+                    { text: 'Concert/Music Festival', value: 'concert' },
+                    { text: 'Conference/Summit', value: 'conference' },
+                    { text: 'Sports Event', value: 'sports' },
+                    { text: 'Exhibition/Trade Show', value: 'exhibition' },
+                    { text: 'Theater/Arts Performance', value: 'theater' },
+                    { text: 'Party/Nightlife', value: 'party' },
+                    { text: 'Other', value: 'other' }
+                ],
+                required: true
+            },
+            {
+                id: 'eventDate',
+                type: 'date',
+                question: (answers) => `When is ${answers.eventName} happening?`,
+                hint: 'Event date determines campaign timeline and urgency messaging. We typically recommend starting campaigns 6-12 weeks before the event.',
+                placeholder: 'Select date',
+                required: true
+            },
+            {
+                id: 'campaignStart',
+                type: 'date',
+                question: 'When would you like to start the marketing campaign?',
+                hint: 'Earlier start = more time for audience building and retargeting. Campaigns starting 8+ weeks before show 40% better conversion rates.',
+                placeholder: 'Select date',
+                required: true
+            },
+            {
+                id: 'country',
+                type: 'text',
+                question: (answers) => `${answers.userName}, which country is ${answers.eventName} taking place in?`,
+                hint: 'Location helps us optimize ad targeting, select the right platforms, and adjust bidding strategies for local competition.',
+                placeholder: 'e.g., United Arab Emirates',
+                required: true
+            },
+            {
+                id: 'city',
+                type: 'text',
+                question: 'Which city?',
+                hint: 'City-level targeting ensures your ads reach the right local audience and helps us estimate market size and competition.',
+                placeholder: 'e.g., Dubai',
+                required: true
+            },
+            {
+                id: 'competitors',
+                type: 'textarea',
+                question: 'Who do you consider your main competitors?',
+                hint: 'Knowing your competitors helps us differentiate your positioning, identify audience overlap, and adjust bids when competing for the same attendees.',
+                placeholder: 'List competitor events or venues...',
+                required: false
+            },
+            {
+                id: 'knowRevenue',
+                type: 'choice',
+                question: (answers) => `Do you know the expected revenue for ${answers.eventName}?`,
+                choices: [
+                    { text: 'Yes, I know the revenue', value: 'yes' },
+                    { text: 'No, but I know ticket details', value: 'no' }
+                ],
+                required: true
+            },
+            {
+                id: 'revenue',
+                type: 'number',
+                question: 'What is your expected revenue?',
+                hint: 'Total revenue helps us calculate an optimal marketing budget as a percentage (typically 5-15% for events) to maximize ROI.',
+                placeholder: 'e.g., 1000000',
+                required: true,
+                condition: (answers) => answers.knowRevenue === 'yes'
+            },
+            {
+                id: 'ticketCount',
+                type: 'number',
+                question: (answers) => `How many tickets do you plan to sell for ${answers.eventName}?`,
+                hint: 'Ticket volume determines campaign scale, audience size targeting, and helps calculate cost-per-acquisition targets.',
+                placeholder: 'e.g., 2000',
+                required: true,
+                condition: (answers) => answers.knowRevenue === 'no'
+            },
+            {
+                id: 'avgTicketPrice',
+                type: 'number',
+                question: 'What is the average ticket price?',
+                hint: 'Ticket price influences audience targeting (demographics, interests), ad creative strategy, and acceptable customer acquisition costs.',
+                placeholder: 'e.g., 500',
+                required: true,
+                condition: (answers) => answers.knowRevenue === 'no'
+            },
+            {
+                id: 'budgetChoice',
+                type: 'choice',
+                question: 'Select your advertising budget approach:',
+                hint: 'Conservative (5%) = basic reach. Realistic (10%) = competitive presence. Custom = for specific goals or competitive markets.',
+                choices: [
+                    { text: 'Conservative (5% of revenue)', value: 'conservative' },
+                    { text: 'Realistic (10% of revenue)', value: 'realistic' },
+                    { text: 'Custom amount', value: 'custom' }
+                ],
+                required: true
+            },
+            {
+                id: 'customBudget',
+                type: 'number',
+                question: 'Enter your custom advertising budget:',
+                hint: 'Your custom budget will unlock different campaign features and ad channel options.',
+                placeholder: 'e.g., 75000',
+                required: true,
+                condition: (answers) => answers.budgetChoice === 'custom'
+            },
+            {
+                id: 'pressRelease',
+                type: 'file',
+                question: 'Do you have a press release or key messaging document?',
+                hint: 'Press releases help us craft compelling ad copy that matches your official messaging and brand voice, improving consistency across all channels.',
+                allowedTypes: ['documents'],
+                allowLinks: true,
+                required: false
+            },
+            {
+                id: 'posters',
+                type: 'file',
+                question: 'Upload poster designs or promotional graphics:',
+                hint: 'High-quality visuals are essential for social ads. Design files (PSD/AI) allow us to create multiple ad sizes and formats optimized for each platform.',
+                allowedTypes: ['images', 'design'],
+                allowLinks: true,
+                required: false
+            },
+            {
+                id: 'photos',
+                type: 'file',
+                question: 'Upload event photos (minimum 3-5 for carousel ads):',
+                hint: 'Multiple photos let us create carousel ads which get 10x more engagement than single images. Show venue, performers, past events, or atmosphere.',
+                allowedTypes: ['images'],
+                allowLinks: true,
+                multiple: true,
+                required: false
+            },
+            {
+                id: 'videos',
+                type: 'file',
+                question: 'Do you have promotional videos?',
+                hint: 'Video ads get 3x higher click-through rates. Even a 15-second teaser can dramatically improve campaign performance on Facebook, Instagram, and YouTube.',
+                allowedTypes: ['videos'],
+                allowLinks: true,
+                multiple: true,
+                required: false
+            },
+            {
+                id: 'landingPage',
+                type: 'text',
+                question: 'Landing page URL (where ads will direct traffic):',
+                hint: 'Landing page quality directly impacts conversion rates. Make sure it loads fast, is mobile-friendly, and has a clear ticket purchase button.',
+                placeholder: 'https://...',
+                required: true
+            },
+            {
+                id: 'companyDocs',
+                type: 'file',
+                question: 'Upload company registration documents (for ad account verification):',
+                hint: 'Meta and Google require business verification to run event ads. This prevents delays and ensures your ads go live on schedule.',
+                allowedTypes: ['documents'],
+                allowLinks: true,
+                required: false
+            },
+            {
+                id: 'hasAnalytics',
+                type: 'choice',
+                question: 'Can you provide analytics access (Google Analytics, Facebook Pixel)?',
+                hint: 'Analytics tracking lets us measure ROI, optimize campaigns daily, and prove which channels drive ticket sales. Essential for campaign success.',
+                choices: [
+                    { text: 'Yes, I can provide access', value: 'yes' },
+                    { text: 'No, need help setting up', value: 'no' }
+                ],
+                required: true
+            },
+            {
+                id: 'hasSocialAccess',
+                type: 'choice',
+                question: 'Can you provide social media account access for ads?',
+                hint: 'Social account access allows us to create ads directly from your brand pages, use engagement data for optimization, and respond to comments quickly.',
+                choices: [
+                    { text: 'Yes, I can grant access', value: 'yes' },
+                    { text: 'No, need guidance', value: 'no' }
+                ],
+                required: true
+            },
+            {
+                id: 'budgetPayment',
+                type: 'choice',
+                question: 'Budget payment preference:',
+                hint: 'Single invoice = simpler accounting. Split payments = better cash flow management for longer campaigns.',
+                choices: [
+                    { text: 'Single invoice', value: 'single' },
+                    { text: 'Need split payments', value: 'split' }
+                ],
+                required: true
+            }
+        ];
+
+        let currentStep = 0;
+        let answers = {};
+        let uploadedFiles = {};
+
+        const FILE_SIZE_LIMIT = 50 * 1024 * 1024; // 50MB
+        const ALLOWED_FILE_TYPES = {
+            images: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'],
+            videos: ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm'],
+            documents: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'],
+            design: ['image/vnd.adobe.photoshop', 'application/postscript', 'image/tiff', 'application/x-tiff']
+        };
+
+        function getActiveQuestions() {
+            return questions.filter(q => !q.condition || q.condition(answers));
+        }
+
+        function updateProgress() {
+            const activeQuestions = getActiveQuestions();
+            const progress = (currentStep / activeQuestions.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressText').textContent = `${currentStep} / ${activeQuestions.length}`;
+        }
+
+        function addMessage(text, isBot = true) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+
+            if (isBot) {
+                messageDiv.innerHTML = `<div class="bot-message">${text}</div>`;
+            } else {
+                messageDiv.innerHTML = `<div class="user-message">${text}</div>`;
+            }
+
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function validateFile(file, allowedTypes) {
+            const errors = [];
+
+            if (file.size > FILE_SIZE_LIMIT) {
+                errors.push(`${file.name} is too large. Maximum size is 50MB.`);
+            }
+
+            let typeAllowed = false;
+            allowedTypes.forEach(type => {
+                if (ALLOWED_FILE_TYPES[type]) {
+                    if (ALLOWED_FILE_TYPES[type].includes(file.type)) {
+                        typeAllowed = true;
+                    }
+                }
+            });
+
+            if (!typeAllowed) {
+                errors.push(`${file.name} has unsupported file type.`);
+            }
+
+            return errors;
+        }
+
+        async function uploadFileToSupabase(file, questionId) {
+            try {
+                const fileName = `${Date.now()}_${file.name}`;
+                const filePath = `${currentBriefId}/${questionId}/${fileName}`;
+
+                const { data, error } = await supabase.storage
+                    .from('event-brief-files')
+                    .upload(filePath, file);
+
+                if (error) throw error;
+
+                return {
+                    path: data.path,
+                    name: file.name,
+                    size: file.size,
+                    type: file.type
+                };
+            } catch (error) {
+                console.error('Upload error:', error);
+                throw error;
+            }
+        }
+
+        async function saveToSupabase() {
+            try {
+                // Calculate budget
+                let budget = 0;
+                if (answers.budgetChoice === 'conservative') {
+                    const revenue = answers.revenue || (answers.ticketCount * answers.avgTicketPrice);
+                    budget = revenue * 0.05;
+                } else if (answers.budgetChoice === 'realistic') {
+                    const revenue = answers.revenue || (answers.ticketCount * answers.avgTicketPrice);
+                    budget = revenue * 0.10;
+                } else {
+                    budget = answers.customBudget;
+                }
+
+                const briefData = {
+                    user_name: answers.userName,
+                    email: answers.email,
+                    event_name: answers.eventName,
+                    event_type: answers.eventType,
+                    event_date: answers.eventDate,
+                    campaign_start: answers.campaignStart,
+                    country: answers.country,
+                    city: answers.city,
+                    revenue: answers.revenue || (answers.ticketCount * answers.avgTicketPrice),
+                    ticket_count: answers.ticketCount || answers.ticketCountAlt,
+                    average_check: answers.avgTicketPrice,
+                    competitors: answers.competitors,
+                    budget_calculation_type: answers.budgetChoice,
+                    marketing_budget: budget,
+                    landing_page: answers.landingPage,
+                    has_analytics_access: answers.hasAnalytics === 'yes',
+                    has_social_accounts_access: answers.hasSocialAccess === 'yes',
+                    budget_payment_preference: answers.budgetPayment,
+                    press_release: answers.pressRelease ? JSON.stringify(answers.pressRelease) : null,
+                    posters: answers.posters ? JSON.stringify(answers.posters) : null,
+                    photos: answers.photos ? JSON.stringify(answers.photos) : null,
+                    videos: answers.videos ? JSON.stringify(answers.videos) : null,
+                    company_docs: answers.companyDocs ? JSON.stringify(answers.companyDocs) : null,
+                    status: 'submitted',
+                    completion_percentage: 100,
+                    updated_at: new Date().toISOString()
+                };
+
+                if (currentBriefId) {
+                    // Update existing
+                    const { error } = await supabase
+                        .from('event_briefs')
+                        .update(briefData)
+                        .eq('id', currentBriefId);
+
+                    if (error) throw error;
+                } else {
+                    // Create new
+                    const { data, error } = await supabase
+                        .from('event_briefs')
+                        .insert([briefData])
+                        .select()
+                        .single();
+
+                    if (error) throw error;
+                    currentBriefId = data.id;
+                }
+
+                showAutoSaveIndicator();
+            } catch (error) {
+                console.error('Error saving to Supabase:', error);
+                addMessage('‚ö†Ô∏è There was an error saving your data. Please try again.', true);
+            }
+        }
+
+        function showAutoSaveIndicator() {
+            const indicator = document.getElementById('autosaveIndicator');
+            indicator.classList.add('show');
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 2000);
+        }
+
+        function showInput() {
+            const activeQuestions = getActiveQuestions();
+
+            if (currentStep >= activeQuestions.length) {
+                showSummary();
+                return;
+            }
+
+            const question = activeQuestions[currentStep];
+
+            // Handle dynamic questions
+            let questionText = typeof question.question === 'function'
+                ? question.question(answers)
+                : question.question;
+
+            let messageHTML = questionText;
+
+            if (question.hint) {
+                messageHTML += ` <span class="hint-toggle" onclick="toggleHint('${question.id}')">?</span>`;
+                messageHTML += `<div class="hint-content" id="hint-${question.id}">${question.hint}</div>`;
+            }
+
+            addMessage(messageHTML);
+
+            const inputArea = document.getElementById('inputArea');
+            inputArea.innerHTML = '';
+
+            if (question.type === 'choice') {
+                const choicesDiv = document.createElement('div');
+                choicesDiv.className = 'choice-buttons';
+
+                question.choices.forEach(choice => {
+                    const btn = document.createElement('button');
+                    btn.className = 'choice-btn';
+                    btn.textContent = choice.text;
+                    btn.onclick = () => handleChoice(question.id, choice.value, choice.text);
+                    choicesDiv.appendChild(btn);
+                });
+
+                inputArea.appendChild(choicesDiv);
+            } else if (question.type === 'file') {
+                const fileContainer = document.createElement('div');
+
+                // File upload area
+                const uploadArea = document.createElement('div');
+                uploadArea.className = 'file-upload-area';
+                uploadArea.innerHTML = '<p>üìé Drag & drop files here or click to browse</p><p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">Max 50MB per file</p>';
+
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.style.display = 'none';
+                fileInput.multiple = question.multiple || false;
+
+                if (question.allowedTypes) {
+                    const acceptTypes = [];
+                    question.allowedTypes.forEach(type => {
+                        if (ALLOWED_FILE_TYPES[type]) {
+                            acceptTypes.push(...ALLOWED_FILE_TYPES[type]);
+                        }
+                    });
+                    fileInput.accept = acceptTypes.join(',');
+                }
+
+                uploadArea.onclick = () => fileInput.click();
+
+                // Drag and drop
+                uploadArea.ondragover = (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.add('dragover');
+                };
+
+                uploadArea.ondragleave = () => {
+                    uploadArea.classList.remove('dragover');
+                };
+
+                uploadArea.ondrop = (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('dragover');
+                    handleFiles(Array.from(e.dataTransfer.files), question);
+                };
+
+                fileInput.onchange = (e) => {
+                    handleFiles(Array.from(e.target.files), question);
+                };
+
+                const fileList = document.createElement('div');
+                fileList.className = 'file-list';
+                fileList.id = `file-list-${question.id}`;
+
+                fileContainer.appendChild(uploadArea);
+                fileContainer.appendChild(fileInput);
+                fileContainer.appendChild(fileList);
+
+                // Links option
+                if (question.allowLinks) {
+                    const orText = document.createElement('p');
+                    orText.style.textAlign = 'center';
+                    orText.style.margin = '15px 0';
+                    orText.style.color = 'var(--text-secondary)';
+                    orText.textContent = 'OR';
+
+                    const linkInput = document.createElement('input');
+                    linkInput.type = 'text';
+                    linkInput.placeholder = 'Paste link(s) here (e.g., Google Drive, Dropbox)';
+                    linkInput.id = `link-input-${question.id}`;
+
+                    fileContainer.appendChild(orText);
+                    fileContainer.appendChild(linkInput);
+                }
+
+                const submitBtn = document.createElement('button');
+                submitBtn.className = 'submit-btn';
+                submitBtn.textContent = question.required ? 'Continue' : 'Skip';
+                submitBtn.onclick = () => handleFileSubmit(question);
+
+                fileContainer.appendChild(submitBtn);
+                inputArea.appendChild(fileContainer);
+            } else {
+                const input = document.createElement(question.type === 'textarea' ? 'textarea' : 'input');
+                input.type = question.type;
+                input.placeholder = question.placeholder || '';
+                input.id = 'currentInput';
+
+                input.onkeydown = (e) => {
+                    if (e.key === 'Enter' && question.type !== 'textarea') {
+                        e.preventDefault();
+                        handleSubmit(question);
+                    }
+                };
+
+                const submitBtn = document.createElement('button');
+                submitBtn.className = 'submit-btn';
+                submitBtn.textContent = 'Continue';
+                submitBtn.onclick = () => handleSubmit(question);
+
+                inputArea.appendChild(input);
+                inputArea.appendChild(submitBtn);
+
+                input.focus();
+            }
+        }
+
+        function toggleHint(questionId) {
+            const hint = document.getElementById(`hint-${questionId}`);
+            hint.classList.toggle('show');
+        }
+
+        function handleChoice(id, value, text) {
+            answers[id] = value;
+            addMessage(text, false);
+
+            // Show budget package if budget choice was made
+            if (id === 'budgetChoice' || id === 'customBudget') {
+                const revenue = answers.revenue || (answers.ticketCount * answers.avgTicketPrice);
+                let budget;
+
+                if (value === 'conservative') {
+                    budget = revenue * 0.05;
+                } else if (value === 'realistic') {
+                    budget = revenue * 0.10;
+                } else if (id === 'customBudget') {
+                    budget = parseFloat(value);
+                }
+
+                if (budget) {
+                    showBudgetPackage(budget);
+                }
+            }
+
+            currentStep++;
+            updateProgress();
+            saveToSupabase();
+            setTimeout(showInput, 500);
+        }
+
+        function handleSubmit(question) {
+            const input = document.getElementById('currentInput');
+            const value = input.value.trim();
+
+            if (question.required && !value) {
+                alert('This field is required.');
+                return;
+            }
+
+            if (value) {
+                answers[question.id] = question.type === 'number' ? parseFloat(value) : value;
+                addMessage(value, false);
+            }
+
+            currentStep++;
+            updateProgress();
+            saveToSupabase();
+            setTimeout(showInput, 500);
+        }
+
+        async function handleFiles(files, question) {
+            const fileList = document.getElementById(`file-list-${question.id}`);
+
+            if (!uploadedFiles[question.id]) {
+                uploadedFiles[question.id] = [];
+            }
+
+            for (const file of files) {
+                const errors = validateFile(file, question.allowedTypes);
+
+                if (errors.length > 0) {
+                    alert(errors.join('\n'));
+                    continue;
+                }
+
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <span>${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                    <span class="file-remove" onclick="removeFile('${question.id}', '${file.name}')">‚úï</span>
+                `;
+                fileList.appendChild(fileItem);
+
+                // Upload to Supabase
+                try {
+                    const uploadedFile = await uploadFileToSupabase(file, question.id);
+                    uploadedFiles[question.id].push(uploadedFile);
+                } catch (error) {
+                    addMessage(`Failed to upload ${file.name}. Please try again.`, true);
+                }
+            }
+        }
+
+        function removeFile(questionId, fileName) {
+            uploadedFiles[questionId] = uploadedFiles[questionId].filter(f => f.name !== fileName);
+            const fileList = document.getElementById(`file-list-${questionId}`);
+            Array.from(fileList.children).forEach(item => {
+                if (item.textContent.includes(fileName)) {
+                    item.remove();
+                }
+            });
+        }
+
+        function handleFileSubmit(question) {
+            const linkInput = document.getElementById(`link-input-${question.id}`);
+            const links = linkInput ? linkInput.value.trim() : '';
+
+            answers[question.id] = {
+                files: uploadedFiles[question.id] || [],
+                links: links
+            };
+
+            if (uploadedFiles[question.id] && uploadedFiles[question.id].length > 0) {
+                addMessage(`‚úì Uploaded ${uploadedFiles[question.id].length} file(s)`, false);
+            }
+            if (links) {
+                addMessage(`üìé Links: ${links}`, false);
+            }
+            if (!uploadedFiles[question.id]?.length && !links) {
+                addMessage('Skipped', false);
+            }
+
+            currentStep++;
+            updateProgress();
+            saveToSupabase();
+            setTimeout(showInput, 500);
+        }
+
+        function showBudgetPackage(budget) {
+            let packageHTML = '';
+
+            if (budget < 10000) {
+                packageHTML = `
+                    <div class="budget-package">
+                        <h3>üì¶ Basic Campaign Package (Budget: $${budget.toLocaleString()})</h3>
+                        <ul>
+                            <li>Facebook & Instagram ad campaigns</li>
+                            <li>Basic audience targeting</li>
+                            <li>Standard ad creative (static images)</li>
+                            <li>Weekly performance reports</li>
+                            <li>Email support</li>
+                        </ul>
+                    </div>
+                `;
+            } else if (budget >= 10000 && budget < 50000) {
+                packageHTML = `
+                    <div class="budget-package">
+                        <h3>üöÄ Standard Campaign Package (Budget: $${budget.toLocaleString()})</h3>
+                        <ul>
+                            <li>Multi-platform campaigns (Facebook, Instagram, Google, TikTok)</li>
+                            <li>Advanced audience targeting & retargeting</li>
+                            <li>Video + carousel ad creatives</li>
+                            <li>A/B testing for optimization</li>
+                            <li>Real-time analytics dashboard</li>
+                            <li>Bi-weekly strategy calls</li>
+                            <li>Priority support</li>
+                        </ul>
+                    </div>
+                `;
+            } else {
+                packageHTML = `
+                    <div class="budget-package">
+                        <h3>üíé Premium Campaign Package (Budget: $${budget.toLocaleString()})</h3>
+                        <ul>
+                            <li>Full-funnel multi-platform strategy</li>
+                            <li>AI-powered Lookalike Audiences</li>
+                            <li>Artist page connections & influencer partnerships</li>
+                            <li>Custom video production & premium creatives</li>
+                            <li>Live Looker Studio reporting dashboard</li>
+                            <li>Advanced conversion tracking & attribution</li>
+                            <li>Dedicated account manager</li>
+                            <li>Weekly strategy optimization</li>
+                            <li>24/7 priority support</li>
+                        </ul>
+                    </div>
+                `;
+            }
+
+            addMessage(packageHTML, true);
+        }
+
+        async function showSummary() {
+            await saveToSupabase(); // Final save
+
+            addMessage('üéâ Thank you! Your event brief is complete.', true);
+
+            let summaryHTML = '<div style="margin-top: 20px;"><strong>Summary:</strong><br><br>';
+
+            const revenue = answers.revenue || (answers.ticketCount * answers.avgTicketPrice);
+            let budget;
+
+            if (answers.budgetChoice === 'conservative') {
+                budget = revenue * 0.05;
+            } else if (answers.budgetChoice === 'realistic') {
+                budget = revenue * 0.10;
+            } else {
+                budget = answers.customBudget;
+            }
+
+            summaryHTML += `<strong>${answers.eventName}</strong><br>`;
+            summaryHTML += `üìß ${answers.email}<br>`;
+            summaryHTML += `üìÖ ${answers.eventDate}<br>`;
+            summaryHTML += `üìç ${answers.city}, ${answers.country}<br>`;
+            summaryHTML += `üí∞ Marketing Budget: $${budget.toLocaleString()}<br>`;
+            summaryHTML += `üé´ Expected Revenue: $${revenue.toLocaleString()}<br><br>`;
+            summaryHTML += `We'll send you a detailed proposal within 24 hours at ${answers.email}.`;
+            summaryHTML += '</div>';
+
+            addMessage(summaryHTML, true);
+
+            document.getElementById('inputArea').innerHTML = `
+                <button class="submit-btn" onclick="location.reload()">Start New Brief</button>
+            `;
+        }
+
+        // Initialize
+        updateProgress();
+        addMessage('Welcome to Platinumlist Event Marketing! Let\'s create your event brief together. üéâ', true);
+        setTimeout(showInput, 1000);
+    </script>
+</body>
+</html>
+          
