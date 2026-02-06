@@ -1121,8 +1121,13 @@
         if (typeof window.supabase !== 'undefined') {
             init();
         } else {
-            window.addEventListener('load', init);
-        }
-    </script>
+                        // Supabase not loaded yet, wait 100ms and try again
+                        setTimeout(function checkSupabase() {
+                                            if (typeof window.supabase !== 'undefined') {
+                                                                    init();
+                                            } else {
+                                                                    setTimeout(checkSupabase, 100);
+                                            }
+                        }, 100);
 </body>
 </html>
